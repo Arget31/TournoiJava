@@ -230,8 +230,40 @@ public class Personnage extends Element implements IPersonnage {
 	
 	
 	
-	
-	
+	/**
+	 * Analyse la potion et autorise son ramassage selon les caracteristiques donnees
+	 * @param ve vue de l'element
+	 * @param converti personnage sous le controle d'un autre
+	 * @throws RemoteException
+	 */
+	public boolean verifierPotion(VueElement cible, boolean converti) throws RemoteException {
+		Element potion;
+		int potForce, potCharisme, potVitesse, potHp, potDefense;
+		
+		try {
+			potion = cible.getControleur().getElement();
+			potForce = potion.getCaract("force");
+			potCharisme = potion.getCaract("charisme");
+			potVitesse = potion.getCaract("vitesse");
+			potHp = potion.getCaract("hp");
+			potDefense = potion.getCaract("defense");
+			
+			// Toutes les caracteristiques positives : potion positive
+			if (potForce > 0 && potCharisme > 0 && potVitesse > 0 && potHp > 0 && potDefense > 0) return true;
+			// Potion tue le personnage ou l'immobilise : potion negative
+			if ((getHP() + potHp) <= 0 || (getVitesse() + potVitesse) <= 0) return false;
+			// Le personnage converti ramasse des potions de charisme en vue d'un coup d'etat
+			if (converti && potCharisme > 0 && getCharisme() < 100) return true;
+			// Reduction d'une caracteristique principale : potion negative
+			if (potCharisme < 0 || potVitesse < 0 || potForce < 0) return false;
+		}
+		catch (RemoteException e) {
+			System.out.println("Erreur lors d'un duel :");
+			e.printStackTrace();
+		}
+
+		return true;
+	}
 	
     public void fuir(Point cible, Point per,Deplacements deplacements) {
     	Point dest = new Point();
@@ -312,9 +344,9 @@ public class Personnage extends Element implements IPersonnage {
 			} else { // si voisins, mais plus eloignes
 				if(!memeEquipe) { // potion ou enemmi
 					if(favorable){
-					// je vais vers le plus proche
-		        	parler("Je vais vers mon voisin " + refPlusProche, ve);
-		        	deplacements.seDirigerVers(refPlusProche);
+						// je vais vers le plus proche
+			        	parler("Je vais vers mon voisin " + refPlusProche, ve);
+			        	deplacements.seDirigerVers(refPlusProche);
 					}else{
 						parler("Je m'enfuis " + refPlusProche, ve);
 						fuir(cible.getPoint(),ve.getPoint(),deplacements);
