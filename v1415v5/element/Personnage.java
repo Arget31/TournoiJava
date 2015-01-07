@@ -290,7 +290,7 @@ public class Personnage extends Element implements IPersonnage {
 					actions.ramasser(refRMI, refPlusProche, ve.getControleur().getArene());
 					
 				} else { // personnage
-					if(!memeEquipe) { // duel seulement si pas dans la meme equipe (pas de coup d'etat possible dans ce cas)
+					if(!memeEquipe || (leader==refPlusProche && cible.getControleur().getElement().getCaract("charisme")<getCharisme())) { // duel seulement si pas dans la meme equipe ou si c'est le leader et qu'on peut le battre
 						// duel
 						parler("Je fais un duel avec " + refPlusProche, ve);
 						actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
