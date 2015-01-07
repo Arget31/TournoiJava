@@ -225,7 +225,47 @@ public class Personnage extends Element implements IPersonnage {
 		equipe.clear();
 	}
 	
-    public void fuir(Point cible, Point per,Deplacements deplacements){
+	
+
+	
+	
+	
+	/**
+	 * Analyse la potion et autorise son ramassage selon les caracteristiques donnees
+	 * @param ve vue de l'element
+	 * @param converti personnage sous le controle d'un autre
+	 * @throws RemoteException
+	 */
+	public boolean verifierPotion(VueElement cible, boolean converti) throws RemoteException {
+		Element potion;
+		int potForce, potCharisme, potVitesse, potHp, potDefense;
+		
+		try {
+			potion = cible.getControleur().getElement();
+			potForce = potion.getCaract("force");
+			potCharisme = potion.getCaract("charisme");
+			potVitesse = potion.getCaract("vitesse");
+			potHp = potion.getCaract("hp");
+			potDefense = potion.getCaract("defense");
+			
+			// Toutes les caracteristiques positives : potion positive
+			if (potForce > 0 && potCharisme > 0 && potVitesse > 0 && potHp > 0 && potDefense > 0) return true;
+			// Potion tue le personnage ou l'immobilise : potion negative
+			if ((getHP() + potHp) <= 0 || (getVitesse() + potVitesse) <= 0) return false;
+			// Le personnage converti ramasse des potions de charisme en vue d'un coup d'etat
+			if (converti && potCharisme > 0 && getCharisme() < 100) return true;
+			// Reduction d'une caracteristique principale : potion negative
+			if (potCharisme < 0 || potVitesse < 0 || potForce < 0) return false;
+		}
+		catch (RemoteException e) {
+			System.out.println("Erreur lors d'un duel :");
+			e.printStackTrace();
+		}
+
+		return true;
+	}
+	
+    public void fuir(Point cible, Point per,Deplacements deplacements) {
     	Point dest = new Point();
     	Random r= new Random();
     	if(cible.x>per.x){
@@ -240,6 +280,8 @@ public class Personnage extends Element implements IPersonnage {
     	}
     	deplacements.seDirigerVers(dest);
     }
+	
+	
 	
 	/** --------------------------------------------------------------------
 	 * 	public void strategie(VueElement ve, Hashtable<Integer,VueElement> voisins, Integer refRMI) throws RemoteException
@@ -256,65 +298,96 @@ public class Personnage extends Element implements IPersonnage {
 	public void strategie(VueElement ve, Hashtable<Integer,VueElement> voisins, Integer refRMI) throws RemoteException {
         Actions actions = new Actions(ve, voisins); //je recupere les voisins (distance < 10)
         Deplacements deplacements = new Deplacements(ve,voisins);
+        boolean converti, actionEffectuee = false;
+        VueElement cible;
         
-        if (0 == voisins.size()) { // je n'ai pas de voisins, j'erre
-        	parler("J'erre...", ve);
-        	deplacements.seDirigerVers(0); //errer
-            
-        } else {
-			VueElement cible = Calculs.chercherElementProche(ve, voisins);
-			
-			int distPlusProche = Calculs.distanceChebyshev(ve.getPoint(), cible.getPoint());
-			
-			int refPlusProche = cible.getRef();
-			Element elemPlusProche = cible.getControleur().getElement();
-			
-			// dans la meme equipe ?
-			boolean memeEquipe = false;
-			
-			boolean favorable = false;
-			
-			if(elemPlusProche instanceof Personnage) {
-				memeEquipe = (leader != -1 && leader == ((Personnage) elemPlusProche).getLeader()) || // meme leader
-						leader == refPlusProche || // cible est le leader de this
-						((Personnage) elemPlusProche).getLeader() == refRMI; // this est le leader de cible
-				favorable=!(cible.getControleur().getElement().getCaract("charisme")>getForce() && 
-							cible.getControleur().getElement().getCaract("force")>getCharisme());
-			}
-			
-			if(distPlusProche <= 2) { // si suffisamment proches
-				if(elemPlusProche instanceof Potion) { // potion
-					// ramassage
-					
-					parler("Je ramasse une potion", ve);
-					actions.ramasser(refRMI, refPlusProche, ve.getControleur().getArene());
-					
-				} else { // personnage
-					if(!memeEquipe || (leader==refPlusProche && cible.getControleur().getElement().getCaract("charisme")<getCharisme())) { // duel seulement si pas dans la meme equipe ou si c'est le leader et qu'on peut le battre
-						// duel
-						parler("Je fais un duel avec " + refPlusProche, ve);
-						actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
+        do {
+        	actionEffectuee = true;
+        	
+	        if (0 == voisins.size()) { // je n'ai pas de voisins, j'erre
+	        	parler("J'erre...", ve);
+	        	deplacements.seDirigerVers(0); //errer
+	            
+	        } else {
+				converti = !getEquipe().isEmpty() && getLeader() != -1;
+				
+				// le leader de l'equipe est la cible prioritaire pour le gain
+				cible = voisins.get(getLeader());
+				if (cible == null) cible = Calculs.chercherElementProche(ve, voisins);
+				
+				int distPlusProche = Calculs.distanceChebyshev(ve.getPoint(), cible.getPoint());
+				
+				int refPlusProche = cible.getRef();
+				Element elemPlusProche = cible.getControleur().getElement();
+				
+				// dans la meme equipe ?
+				boolean memeEquipe = false;
+				boolean favorable = false;
+				
+				if(elemPlusProche instanceof Personnage) {
+					memeEquipe = (leader != -1 && leader == ((Personnage) elemPlusProche).getLeader()) || // meme leader
+							leader == refPlusProche || // cible est le leader de this
+							((Personnage) elemPlusProche).getLeader() == refRMI; // this est le leader de cible
+					favorable=!(cible.getControleur().getElement().getCaract("charisme")>getForce() && 
+								cible.getControleur().getElement().getCaract("force")>getCharisme());
+				}
+				
+				if(distPlusProche <= 2) { // si suffisamment proches
+					if(elemPlusProche instanceof Potion) { // potion
+						// ramassage
+						
+						if (verifierPotion(cible, converti)) {
+							parler("Je ramasse une potion", ve);
+							actions.ramasser(refRMI, refPlusProche, ve.getControleur().getArene());
+						}
+						else actionEffectuee = false;
+						
+					} else { // personnage
+						if(!memeEquipe) { // duel si pas dans la meme equipe
+							// duel
+							parler("Je fais un duel avec " + refPlusProche, ve);
+							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
+						} else if (refPlusProche == getLeader()) {
+							// coup d'etat
+							parler("Je fais un coup d'etat sur mon leader " + refPlusProche, ve);
+							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
+						}
+						else {
+				        	parler("J'erre...", ve);
+				        	deplacements.seDirigerVers(0); // errer
+						}
+					}
+				} else { // si voisins, mais plus eloignes
+					if(elemPlusProche instanceof Potion) { // potion
+						
+						if (verifierPotion(cible, converti)) {
+							parler("Je vais vers la potion" + refPlusProche, ve);
+							deplacements.seDirigerVers(refPlusProche);
+						}
+						else actionEffectuee = false;
 					} else {
-			        	parler("J'erre...", ve);
-			        	deplacements.seDirigerVers(0); // errer
+						if(!memeEquipe) { // ennemi
+							if(favorable){
+								// je vais vers le plus proche
+					        	parler("Je vais vers mon voisin " + refPlusProche, ve);
+					        	deplacements.seDirigerVers(refPlusProche);
+							}else{
+								parler("Je m'enfuis " + refPlusProche, ve);
+								fuir(cible.getPoint(),ve.getPoint(),deplacements);
+							}
+				        	
+						} else if (refPlusProche == getLeader()) { // dirigier vers le leader pour une tentative de coup d'etat
+							// je vais vers le leader
+							parler("Je vais vers mon leader " + refPlusProche, ve);
+				        	deplacements.seDirigerVers(refPlusProche);
+						}
+						else {
+				        	parler("J'erre...", ve);
+				        	deplacements.seDirigerVers(0); // errer
+						}
 					}
 				}
-			} else { // si voisins, mais plus eloignes
-				if(!memeEquipe || leader!=refPlusProche) { // potion ou enemmi
-					if(favorable){
-					// je vais vers le plus proche
-		        	parler("Je vais vers mon voisin " + refPlusProche, ve);
-		        	deplacements.seDirigerVers(refPlusProche);
-					}else{
-						parler("Je m'enfuis " + refPlusProche, ve);
-						fuir(cible.getPoint(),ve.getPoint(),deplacements);
-					}
-		        	
-				} else {
-		        	parler("J'erre...", ve);
-		        	deplacements.seDirigerVers(0); // errer
-				}
-			}
-        }
+	        }
+        } while (!actionEffectuee);
 	}
 }
