@@ -225,15 +225,7 @@ public class Personnage extends Element implements IPersonnage {
 		equipe.clear();
 	}
 	
-	
-
-	
-	
-	
-	
-	
-	
-    public void fuir(Point cible, Point per,Deplacements deplacements) {
+    public void fuir(Point cible, Point per,Deplacements deplacements){
     	Point dest = new Point();
     	Random r= new Random();
     	if(cible.x>per.x){
@@ -248,8 +240,6 @@ public class Personnage extends Element implements IPersonnage {
     	}
     	deplacements.seDirigerVers(dest);
     }
-	
-	
 	
 	/** --------------------------------------------------------------------
 	 * 	public void strategie(VueElement ve, Hashtable<Integer,VueElement> voisins, Integer refRMI) throws RemoteException
@@ -310,7 +300,7 @@ public class Personnage extends Element implements IPersonnage {
 					}
 				}
 			} else { // si voisins, mais plus eloignes
-				if(!memeEquipe) { // potion ou enemmi
+				if(!memeEquipe || leader!=refPlusProche) { // potion ou enemmi
 					if(favorable){
 					// je vais vers le plus proche
 		        	parler("Je vais vers mon voisin " + refPlusProche, ve);
