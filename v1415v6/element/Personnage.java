@@ -347,7 +347,8 @@ public class Personnage extends Element implements IPersonnage {
 							// duel
 							parler("Je fais un duel avec " + refPlusProche, ve);
 							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
-						} else if (refPlusProche == getLeader()) {
+						} else if (refPlusProche == getLeader() && 
+								getCharisme() > cible.getControleur().getElement().getCaract("charisme")) {
 							// coup d'etat
 							parler("Je fais un coup d'etat sur mon leader " + refPlusProche, ve);
 							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
@@ -376,8 +377,9 @@ public class Personnage extends Element implements IPersonnage {
 								fuir(cible.getPoint(),ve.getPoint(),deplacements);
 							}
 				        	
-						} else if (refPlusProche == getLeader()) { // dirigier vers le leader pour une tentative de coup d'etat
-							// je vais vers le leader
+						} else if (refPlusProche == getLeader() && 
+								getCharisme() > cible.getControleur().getElement().getCaract("charisme")) { 
+							// se diriger vers le leader pour une tentative de coup d'etat
 							parler("Je vais vers mon leader " + refPlusProche, ve);
 				        	deplacements.seDirigerVers(refPlusProche);
 						}

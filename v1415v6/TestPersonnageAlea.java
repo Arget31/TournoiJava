@@ -4,12 +4,12 @@ import java.rmi.RemoteException;
 import java.util.Random;
 
 import controle.Console;
-import element.*;
+import element.Personnage;
 
 /**
  * Test de la Console avec un Element qui s'ajoute a l'Arene (apres lancement Arene et IHM). A lancer en plusieurs exemplaires.
  */
-public class TestGuerrier {
+public class TestPersonnageAlea {
 
 	public static void main(String[] args) {
 		
@@ -25,7 +25,7 @@ public class TestGuerrier {
 			}
 
 			Random r = new Random();
-			Personnage bidule = new Personnage("GuerrierB21", 30, 1, 100, 4, 60);
+			Personnage bidule = new Personnage("Truc",  r.nextInt(30), r.nextInt(30), r.nextInt(29)+1, 1, r.nextInt(10));
 			new Console(bidule, r.nextInt(100), r.nextInt(100), port, ipArene);
 		} catch (RemoteException e) {
 			e.printStackTrace();
