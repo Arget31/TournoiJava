@@ -136,7 +136,7 @@ public class DuelBasic implements IDuel {
 			tuer(attaquant, defenseur);
 		}
 		else{
-		defenseur.majCaractElement(caract);
+			defenseur.majCaractElement(caract);
 		}
 	}
 	
