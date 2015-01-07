@@ -25,7 +25,7 @@ public class TestGuerrier {
 			}
 
 			Random r = new Random();
-			Personnage bidule = new Personnage("GuerrierB21", 10, 10, 10, 1, 6);
+			Personnage bidule = new Personnage("GuerrierB21", 30, 1, 100, 4, 60);
 			new Console(bidule, r.nextInt(100), r.nextInt(100), port, ipArene);
 		} catch (RemoteException e) {
 			e.printStackTrace();

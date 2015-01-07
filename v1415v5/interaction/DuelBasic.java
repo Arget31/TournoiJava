@@ -135,6 +135,9 @@ public class DuelBasic implements IDuel {
 		if (defHp <= 0){
 			tuer(attaquant, defenseur);
 		}
+		else{
+		defenseur.majCaractElement(caract);
+		}
 	}
 	
 	/**

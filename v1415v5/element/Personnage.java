@@ -8,9 +8,11 @@ import interaction.Actions;
 import interaction.Deplacements;
 import interfaceGraphique.VueElement;
 
+import java.awt.Point;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Random;
 
 import utilitaires.Calculs;
 
@@ -231,7 +233,21 @@ public class Personnage extends Element implements IPersonnage {
 	
 	
 	
-	
+    public void fuir(Point cible, Point per,Deplacements deplacements) {
+    	Point dest = new Point();
+    	Random r= new Random();
+    	if(cible.x>per.x){
+    		dest.x=r.nextInt(per.x);
+    	}else{
+    		dest.x=per.x+(r.nextInt(99-per.x));
+    	}
+    	if(cible.y>per.y){
+    		dest.y=r.nextInt(per.y);
+    	}else{
+    		dest.y=per.y+r.nextInt(99-per.y);
+    	}
+    	deplacements.seDirigerVers(dest);
+    }
 	
 	
 	
@@ -266,15 +282,20 @@ public class Personnage extends Element implements IPersonnage {
 			// dans la meme equipe ?
 			boolean memeEquipe = false;
 			
+			boolean favorable = false;
+			
 			if(elemPlusProche instanceof Personnage) {
 				memeEquipe = (leader != -1 && leader == ((Personnage) elemPlusProche).getLeader()) || // meme leader
 						leader == refPlusProche || // cible est le leader de this
 						((Personnage) elemPlusProche).getLeader() == refRMI; // this est le leader de cible
+				favorable=!(cible.getControleur().getElement().getCaract("charisme")>getForce() && 
+							cible.getControleur().getElement().getCaract("force")>getCharisme());
 			}
 			
 			if(distPlusProche <= 2) { // si suffisamment proches
 				if(elemPlusProche instanceof Potion) { // potion
 					// ramassage
+					
 					parler("Je ramasse une potion", ve);
 					actions.ramasser(refRMI, refPlusProche, ve.getControleur().getArene());
 					
@@ -289,10 +310,15 @@ public class Personnage extends Element implements IPersonnage {
 					}
 				}
 			} else { // si voisins, mais plus eloignes
-				if(!memeEquipe) { // potion ou enemmi 
+				if(!memeEquipe) { // potion ou enemmi
+					if(favorable){
 					// je vais vers le plus proche
 		        	parler("Je vais vers mon voisin " + refPlusProche, ve);
 		        	deplacements.seDirigerVers(refPlusProche);
+					}else{
+						parler("Je m'enfuis " + refPlusProche, ve);
+						fuir(cible.getPoint(),ve.getPoint(),deplacements);
+					}
 		        	
 				} else {
 		        	parler("J'erre...", ve);
