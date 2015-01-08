@@ -312,17 +312,14 @@ public class Personnage extends Element implements IPersonnage {
 				
 				// le leader de l'equipe est la cible prioritaire pour le gain
 				cible = voisins.get(getLeader());
-				// si le leader n'est pas trouve ou qu'il a plus de charisme, aucun coup d'etat possible
+				// si le leader n'est pas trouve on cherche le voisins le plus proche
 				if (cible == null) cible = Calculs.chercherElementProche(ve, voisins);
-				else if (getCharisme() <= cible.getControleur().getElement().getCaract("charisme"))
-					cible = Calculs.chercherElementProche(ve, voisins);
 				
 				int distPlusProche = Calculs.distanceChebyshev(ve.getPoint(), cible.getPoint());
 				
 				int refPlusProche = cible.getRef();
 				Element elemPlusProche = cible.getControleur().getElement();
 				
-				// dans la meme equipe ?
 				boolean memeEquipe = false;
 				boolean favorable = false;
 				
@@ -351,7 +348,8 @@ public class Personnage extends Element implements IPersonnage {
 							// duel
 							parler("Je fais un duel avec " + refPlusProche, ve);
 							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
-						} else if (refPlusProche == getLeader()) {
+						} else if (refPlusProche == getLeader() &&
+								getCharisme() > cible.getControleur().getElement().getCaract("charisme")) {
 							// coup d'etat
 							parler("Je fais un coup d'etat sur mon leader " + refPlusProche, ve);
 							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
@@ -381,7 +379,8 @@ public class Personnage extends Element implements IPersonnage {
 								parler("Je m'enfuis " + refPlusProche, ve);
 						    	deplacements.seDirigerVers(caseFuite(ve.getPoint(), cible.getPoint()));
 							}
-						} else if (refPlusProche == getLeader()) { 
+						} else if (refPlusProche == getLeader() &&
+								getCharisme() > cible.getControleur().getElement().getCaract("charisme")) { 
 							// je me dirige vers le leader pour tentative de coup d'etat
 							parler("Je vais vers mon leader " + refPlusProche, ve);
 				        	deplacements.seDirigerVers(refPlusProche);
