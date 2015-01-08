@@ -226,10 +226,6 @@ public class Personnage extends Element implements IPersonnage {
 	}
 	
 	
-
-	
-	
-	
 	/**
 	 * Analyse la potion et autorise son ramassage selon les caracteristiques donnees
 	 * @param ve vue de l'element
@@ -265,23 +261,24 @@ public class Personnage extends Element implements IPersonnage {
 		return true;
 	}
 	
-    public void fuir(Point cible, Point per,Deplacements deplacements) {
+	/**
+	 * Calcule une case de fuite du personnage en fonction de la case ciblee
+	 * @param per positition du personnage
+	 * @param cible position de la cible
+	 * @throws RemoteException
+	 */
+    public Point caseFuite (Point per, Point cible) {
     	Point dest = new Point();
     	Random r= new Random();
-    	if(cible.x>per.x){
-    		dest.x=r.nextInt(per.x);
-    	}else{
-    		dest.x=per.x+(r.nextInt(99-per.x));
-    	}
-    	if(cible.y>per.y){
-    		dest.y=r.nextInt(per.y);
-    	}else{
-    		dest.y=per.y+r.nextInt(99-per.y);
-    	}
-    	deplacements.seDirigerVers(dest);
+    	
+    	if(cible.x > per.x) dest.x = r.nextInt(per.x);
+    	else dest.x = per.x+(r.nextInt(99-per.x));
+    	
+    	if(cible.y > per.y) dest.y = r.nextInt(per.y);
+    	else dest.y = per.y+r.nextInt(99-per.y);
+    	
+    	return dest;
     }
-	
-	
 	
 	/** --------------------------------------------------------------------
 	 * 	public void strategie(VueElement ve, Hashtable<Integer,VueElement> voisins, Integer refRMI) throws RemoteException
@@ -324,7 +321,7 @@ public class Personnage extends Element implements IPersonnage {
 				boolean memeEquipe = false;
 				boolean favorable = false;
 				
-				if(elemPlusProche instanceof Personnage) {
+				if (elemPlusProche instanceof Personnage) {
 					memeEquipe = (leader != -1 && leader == ((Personnage) elemPlusProche).getLeader()) || // meme leader
 							leader == refPlusProche || // cible est le leader de this
 							((Personnage) elemPlusProche).getLeader() == refRMI; // this est le leader de cible
@@ -332,18 +329,20 @@ public class Personnage extends Element implements IPersonnage {
 								cible.getControleur().getElement().getCaract("force")>getCharisme());
 				}
 				
-				if(distPlusProche <= 2) { // si suffisamment proches
-					if(elemPlusProche instanceof Potion) { // potion
-						// ramassage
-						
+				if (distPlusProche <= 2) { // si suffisamment proches
+					if (elemPlusProche instanceof Potion) { // potion
 						if (verifierPotion(cible, converti)) {
+							// je ramasse la potion positive
 							parler("Je ramasse une potion", ve);
 							actions.ramasser(refRMI, refPlusProche, ve.getControleur().getArene());
+						} else {
+							// j'ignore la position negative
+							voisins.remove(refPlusProche);
+							actionEffectuee = false;
 						}
-						else actionEffectuee = false;
 						
 					} else { // personnage
-						if(!memeEquipe) { // duel si pas dans la meme equipe
+						if (!memeEquipe) { // duel si pas dans la meme equipe
 							// duel
 							parler("Je fais un duel avec " + refPlusProche, ve);
 							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
@@ -352,38 +351,38 @@ public class Personnage extends Element implements IPersonnage {
 							// coup d'etat
 							parler("Je fais un coup d'etat sur mon leader " + refPlusProche, ve);
 							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
-						}
-						else {
+						} else {
 				        	parler("J'erre...", ve);
 				        	deplacements.seDirigerVers(0); // errer
 						}
 					}
 				} else { // si voisins, mais plus eloignes
-					if(elemPlusProche instanceof Potion) { // potion
-						
+					if (elemPlusProche instanceof Potion) { // potion
 						if (verifierPotion(cible, converti)) {
+							// je me dirige vers la potion positive
 							parler("Je vais vers la potion" + refPlusProche, ve);
 							deplacements.seDirigerVers(refPlusProche);
+						} else {
+							// j'ignore la position negative
+							voisins.remove(refPlusProche);
+							actionEffectuee = false;
 						}
-						else actionEffectuee = false;
 					} else {
-						if(!memeEquipe) { // ennemi
-							if(favorable){
+						if (!memeEquipe) { // ennemi
+							if (favorable) {
 								// je vais vers le plus proche
 					        	parler("Je vais vers mon voisin " + refPlusProche, ve);
 					        	deplacements.seDirigerVers(refPlusProche);
-							}else{
+							} else {
 								parler("Je m'enfuis " + refPlusProche, ve);
-								fuir(cible.getPoint(),ve.getPoint(),deplacements);
+						    	deplacements.seDirigerVers(caseFuite(ve.getPoint(), cible.getPoint()));
 							}
-				        	
 						} else if (refPlusProche == getLeader() && 
 								getCharisme() > cible.getControleur().getElement().getCaract("charisme")) { 
-							// se diriger vers le leader pour une tentative de coup d'etat
+							// je me dirige vers le leader pour tentative de coup d'etat
 							parler("Je vais vers mon leader " + refPlusProche, ve);
 				        	deplacements.seDirigerVers(refPlusProche);
-						}
-						else {
+						} else {
 				        	parler("J'erre...", ve);
 				        	deplacements.seDirigerVers(0); // errer
 						}
