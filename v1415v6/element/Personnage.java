@@ -246,6 +246,8 @@ public class Personnage extends Element implements IPersonnage {
 			
 			// Toutes les caracteristiques positives : potion positive
 			if (potForce > 0 && potCharisme > 0 && potVitesse > 0 && potHp > 0 && potDefense > 0) return true;
+			// Toutes les caracteristiques negatives ou nulles : potion negative
+			if (potForce <= 0 && potCharisme <= 0 && potVitesse <= 0 && potHp <= 0 && potDefense <= 0) return false;
 			// Potion tue le personnage ou l'immobilise : potion negative
 			if ((getHP() + potHp) <= 0 || (getVitesse() + potVitesse) <= 0) return false;
 			// Le personnage converti ramasse des potions de charisme en vue d'un coup d'etat
@@ -271,11 +273,11 @@ public class Personnage extends Element implements IPersonnage {
     	Point dest = new Point();
     	Random r= new Random();
     	
-    	if(cible.x > per.x) dest.x = r.nextInt(per.x);
-    	else dest.x = per.x+(r.nextInt(99-per.x));
+    	if (cible.x > per.x) dest.x = r.nextInt(per.x);
+    	else dest.x = per.x + (r.nextInt(99-per.x));
     	
-    	if(cible.y > per.y) dest.y = r.nextInt(per.y);
-    	else dest.y = per.y+r.nextInt(99-per.y);
+    	if (cible.y > per.y) dest.y = r.nextInt(per.y);
+    	else dest.y = per.y + r.nextInt(99-per.y);
     	
     	return dest;
     }
@@ -310,7 +312,10 @@ public class Personnage extends Element implements IPersonnage {
 				
 				// le leader de l'equipe est la cible prioritaire pour le gain
 				cible = voisins.get(getLeader());
+				// si le leader n'est pas trouve ou qu'il a plus de charisme, aucun coup d'etat possible
 				if (cible == null) cible = Calculs.chercherElementProche(ve, voisins);
+				else if (getCharisme() <= cible.getControleur().getElement().getCaract("charisme"))
+					cible = Calculs.chercherElementProche(ve, voisins);
 				
 				int distPlusProche = Calculs.distanceChebyshev(ve.getPoint(), cible.getPoint());
 				
@@ -346,8 +351,7 @@ public class Personnage extends Element implements IPersonnage {
 							// duel
 							parler("Je fais un duel avec " + refPlusProche, ve);
 							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
-						} else if (refPlusProche == getLeader() && 
-								getCharisme() > cible.getControleur().getElement().getCaract("charisme")) {
+						} else if (refPlusProche == getLeader()) {
 							// coup d'etat
 							parler("Je fais un coup d'etat sur mon leader " + refPlusProche, ve);
 							actions.interaction(refRMI, refPlusProche, ve.getControleur().getArene());
@@ -377,8 +381,7 @@ public class Personnage extends Element implements IPersonnage {
 								parler("Je m'enfuis " + refPlusProche, ve);
 						    	deplacements.seDirigerVers(caseFuite(ve.getPoint(), cible.getPoint()));
 							}
-						} else if (refPlusProche == getLeader() && 
-								getCharisme() > cible.getControleur().getElement().getCaract("charisme")) { 
+						} else if (refPlusProche == getLeader()) { 
 							// je me dirige vers le leader pour tentative de coup d'etat
 							parler("Je vais vers mon leader " + refPlusProche, ve);
 				        	deplacements.seDirigerVers(refPlusProche);
